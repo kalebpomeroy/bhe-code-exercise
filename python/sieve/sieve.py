@@ -1,12 +1,8 @@
 import math
-from sieve import gpu_acceleration as gpu
 
 
 class Sieve:
-    def __init__(self) -> None:
-        pass
-
-    def nth_prime(self, n: int, gpu_acceleration: bool = False) -> int:
+    def nth_prime(self, n: int) -> int:
 
         if n < 0:
             raise ValueError("n must be a positive integer.")
@@ -27,12 +23,11 @@ class Sieve:
         # Since we are only marking odd numbers, we can use half the size
         sieve_size = (upper_bound // 2) + 1
         sieve = [True] * sieve_size
+        return self.process_sieve(sieve, n, upper_bound)
+
+    def process_sieve(self, sieve: list[bool], n: int, upper_bound: int) -> int:
         count = 1
-
-        if gpu_acceleration:
-            sieve = gpu.initialize(sieve)
-
-        for idx in range(1, sieve_size):
+        for idx in range(1, len(sieve)):
             # If we know it's not a prime, skip
             if not sieve[idx]:
                 continue
@@ -45,13 +40,12 @@ class Sieve:
                 return prime
 
             count += 1
-
-            # Mark all multiples of the prime as False, using GPU if requested
-            if gpu_acceleration:
-                gpu.launch_kernel(sieve, prime, upper_bound)
-            else:
-                for multiple in range(prime * prime, upper_bound, prime * 2):
-                    sieve[multiple // 2] = False
+            self.mark_multiples(sieve, prime, upper_bound)
 
         # If no prime is found at this point, something went very wrong
         return None
+
+    def mark_multiples(self, sieve: list, prime: int, upper_bound: int) -> None:
+        for multiple in range(prime * prime, upper_bound, prime * 2):
+            sieve[multiple // 2] = False
+
